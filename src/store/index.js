@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import actions from './actions'
+import { Indicator, Toast } from 'mint-ui'
 
 Vue.use(Vuex)
 
@@ -19,13 +20,22 @@ export default new Vuex.Store({
     pack: {},
     plan: {},
     schemas: [],
-    tip: {
-      loading: false,
-      error_toast: false,
-      success_toast: false,
-      sheet: false,
-      dialog: false,
-      message: ''
+    tip: {}
+  },
+  mutations: {
+    showLoading (state, message) {
+      Indicator.open(message)
+    },
+    handleError (state, error) {
+      Indicator.close()
+      if (!error) return 0
+      if (error.errcode) {
+        Toast(error.errmsg)
+      } else {
+        if (error.errmsg) {
+          Toast(error.errmsg)
+        }
+      }
     }
   },
   actions

@@ -1,55 +1,89 @@
 import config from '@/config.js'
 import axios from 'axios'
+import wx from 'weixin-js-sdk'
 
-let getUserInfo = ({ state }) => {
-  axios.get(config.api_url + '/user', {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200) {
-      state.user = res.data
+let ajax = {
+  get (url, state) {
+    return new Promise(resolve => {
+      axios.get(url, {
+        headers: { ssid: state.ssid }
+      }).then(res => {
+        if (res.status === 200) {
+          resolve(res.data)
+        } else {
+          resolve({ errcode: res.status, errmsg: '网络错误...' })
+        }
+      })
+    })
+  },
+  post (url, data, state) {
+    return new Promise(resolve => {
+      axios.post(url, data, {
+        headers: { ssid: state.ssid }
+      }).then(res => {
+        if (res.status === 200) {
+          resolve(res.data)
+        } else {
+          resolve({ errcode: res.status, errmsg: '网络错误...' })
+        }
+      })
+    })
+  }
+}
+
+let payForEnroll = async ({ state, commit }) => {
+  let res = await ajax.post(config.api_url + '/jsapi_config', {
+    url: 'http://xcm.conw.net'
+  }, state)
+  state.tip = res
+  wx.scanQRCode({
+    needResult: 0, // 默认为0，扫描结果由微信处理，1则直接返回扫描结果，
+    scanType: ['qrCode', 'barCode'], // 可以指定扫二维码还是一维码，默认二者都有
+    success: function (res) {
+      var result = res.resultStr // 当needResult 为 1 时，扫码返回的结果
+      console.log(result)
+      state.pack.title = result
     }
   })
 }
 
-let saveUserName = ({ state }) => {
-  axios.post(config.api_url + '/user', { name: state.user.name }, {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200) {
-      showToast(state, res.data)
-    }
-  })
+let getUserInfo = async ({ state, commit }) => {
+  commit('showLoading')
+  let res = await ajax.get(config.api_url + '/user', state)
+  commit('handleError', res)
+  if (!res.errcode) state.user = res
 }
 
-let saveUserSex = ({ state }) => {
-  axios.post(config.api_url + '/user', { sex: state.user.sex }, {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200) {
-      showToast(state, res.data)
-    }
-  })
+let saveUserName = async ({ state, commit }) => {
+  commit('showLoading')
+  let res = await ajax.post(config.api_url + '/user', {
+    name: state.user.name
+  }, state)
+  commit('handleError', res)
 }
 
-let sendVerifyCode = ({ state }, phone) => {
-  axios.get(config.api_url + '/verify?phone=' + phone, {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200 && !res.data.errcode) {
-      console.log('sendVerifyCode: Sucess')
-    }
-  })
+let saveUserSex = async ({ state, commit }) => {
+  commit('showLoading')
+  let res = await ajax.post(config.api_url + '/user', {
+    sex: state.user.sex
+  }, state)
+  commit('handleError', res)
 }
 
-let changePhone = ({ state, dispatch }, code) => {
-  axios.post(config.api_url + '/changePhone', { code: code }, {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200) {
-      state.tip.loading = false
-      showToast(state, res.data)
-    }
-  })
+let sendVerifyCode = async ({ state, commit }, phone) => {
+  commit('showLoading')
+  let res = await ajax.post(config.api_url + '/verify', {
+    phone: phone
+  }, state)
+  commit('handleError', res)
+}
+
+let changePhone = async ({ state, commit }, code) => {
+  commit('showLoading')
+  let res = await ajax.post(config.api_url + '/changePhone', {
+    code: code
+  }, state)
+  commit('handleError', res)
 }
 
 let getCoaches = ({ state }) => {
@@ -76,17 +110,23 @@ let getCoach = ({ state }) => {
   })
 }
 
-let getPlan = ({ state }) => {
-  axios.get(config.api_url + '/plan?coach_id=' + state.coach.coach_id + '&year=' + state.course.year + '&month=' + state.course.month + '&date=' + state.course.date, {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200) {
-      if (res.data.length) {
-        state.plan = res.data[0]
-        state.plan.content = JSON.parse(state.plan.content)
+let getPlan = async ({ state, commit }) => {
+  commit('showLoading')
+  console.log('haha')
+  let res = await ajax.get(config.api_url + '/plan?coach_id=' + state.coach.coach_id + '&year=' + state.course.year + '&month=' + state.course.month + '&date=' + state.course.date, state)
+  commit('handleError', res)
+  if (!res.errcode && res.length) {
+    res[0].content = JSON.parse(res[0].content)
+    let courses = await ajax.get(config.api_url + '/course?coach_id=' + state.coach.coach_id + '&year=' + state.course.year + '&month=' + state.course.month + '&date=' + state.course.date, state)
+    for (let con of res[0].content) {
+      for (let course of courses) {
+        if (course.start === con.start && course.end === con.end) {
+          con.el = true
+        }
       }
     }
-  })
+    state.plan = res[0]
+  }
 }
 
 let addCourse = ({ state }) => {
@@ -94,21 +134,7 @@ let addCourse = ({ state }) => {
     headers: { ssid: state.ssid }
   }).then(res => {
     if (res.status === 200) {
-      showToast(state, res.data)
-    }
-  })
-}
-
-let getCourses = ({ state }) => {
-  axios.get(config.api_url + '/course?coach_id=' + state.coach.coach_id + '&year=' + state.course.year + '&month=' + state.course.month + '&date=' + state.course.date, {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200) {
-      if (res.data.errcode) {
-        console.log(res.data.errmsg)
-      } else {
-        state.courses = res.data
-      }
+      // showToast(state, res.data)
     }
   })
 }
@@ -144,34 +170,18 @@ let getPacks = ({ state }) => {
   })
 }
 
-let showToast = (state, data) => {
-  state.tip.message = data.errmsg
-  if (data.errcode) {
-    state.tip.error_toast = true
-    setTimeout(() => {
-      state.tip.error_toast = false
-    }, 1000)
-  } else {
-    state.tip.success_toast = true
-    setTimeout(() => {
-      state.tip.success_toast = false
-    }, 1000)
-  }
-}
-
 export default {
   getUserInfo,
   saveUserName,
   saveUserSex,
   changePhone,
   sendVerifyCode,
-  showToast,
   getCoaches,
   getCoach,
   getPlan,
   addCourse,
-  getCourses,
   getSchools,
   getSchool,
-  getPacks
+  getPacks,
+  payForEnroll
 }

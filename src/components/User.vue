@@ -34,7 +34,7 @@
         </div>
       </div>
 
-      <div class="weui-cell weui-cell_access">
+      <div class="weui-cell weui-cell_access" @click="showBind122Page">
         <div class="weui-cell__hd">
           <label class="weui-label">学车进度</label>
         </div>
@@ -46,12 +46,10 @@
       </div>
     </div>
     <br />
-    <a class="weui-btn weui-btn_plain-primary">保存</a>
 
     <transition enter-active-class="animated fadeIn" leave-active-class="animated fadeOut">
       <div class="weui-mask" v-if="mask" @click="hideActionSheet"></div>
     </transition>
-
 
 
     <div class="js_dialog" v-if="nameDialog">
@@ -67,7 +65,6 @@
         </div>
       </div>
     </div>
-
 
 
     <div class="weui-actionsheet" :class="{'weui-actionsheet_toggle': sexActionSheet}">
@@ -132,6 +129,9 @@
       },
       showPhonePage () {
         this.$router.push('/user/phone')
+      },
+      showBind122Page () {
+        this.$router.push('/user/bind122')
       }
     },
     created () {

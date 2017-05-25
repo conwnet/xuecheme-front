@@ -18,67 +18,27 @@
         </p>
       </div>
     </div>
-    <div class="weui-tab">
-      <div class="weui-navbar">
-        <div class="weui-navbar__item" @click="choose(1)" :class="{'weui-bar__item_on': chooseOn == 1}">
-          明天
-        </div>
-        <div class="weui-navbar__item" @click="choose(2)" :class="{'weui-bar__item_on': chooseOn == 2}">
-          后天
-        </div>
-        <div class="weui-navbar__item" @click="choose(3)" :class="{'weui-bar__item_on': chooseOn == 3}">
-          大后天
-        </div>
-      </div>
 
-      <div class="weui-tab__panel">
-        <div class="weui-cells">
-          <a class="weui-cell weui-cell_access" @click="showConfirmActionSheet(con)" v-for="con in plan.content">
-            <div class="weui-cell__bd">
-              <p class="course_center" :style="{color: con.el ? '#E64340' : '#1AAD19'}">{{ parseInt(con.start / 60) + ':' + parseInt(con.start % 60) }}
-                - {{ parseInt(con.end / 60) + ':' + parseInt(con.end % 60) }}</p>
-            </div>
-            <div class="weui-cell__ft" v-if="!con.el">
-            </div>
-          </a>
-        </div>
-      </div>
+    <mt-navbar v-model="selected">
+      <mt-tab-item id="1">明天</mt-tab-item>
+      <mt-tab-item id="2">后天</mt-tab-item>
+      <mt-tab-item id="3">大后天</mt-tab-item>
+    </mt-navbar>
 
-      <transition enter-active-class="animated fadeIn" leave-active-class="animated fadeOut">
-        <div class="weui-mask" v-if="tip.mask" @click="hideConfirmActionSheet"></div>
-      </transition>
-      <div class="weui-actionsheet" :class="{'weui-actionsheet_toggle': tip.sheet}">
-        <div class="weui-actionsheet__title">
-          <p class="weui-actionsheet__title-text">请确认您的预约信息</p>
-        </div>
-        <div class="weui-actionsheet__menu">
-          <div class="weui-actionsheet__cell">{{ coach.name }}</div>
-          <div class="weui-actionsheet__cell">{{ parseInt(course.start / 60) + ':' + parseInt(course.start % 60) }}
-            - {{ parseInt(course.end / 60) + ':' + parseInt(course.end % 60) }}</div>
-        </div>
-
-        <div class="weui-actionsheet__action">
-          <div class="weui-actionsheet__cell" @click="addCourse(course)">
-            <span style="color:red">确认预约</span>
-          </div>
-        </div>
-        <div class="weui-actionsheet__action">
-          <div class="weui-actionsheet__cell" @click="hideConfirmActionSheet">取消</div>
-        </div>
-      </div>
-
+    <div class="schema">
+      <mt-cell :title="toTime(con.start / 60) + ':' + toTime(con.start % 60) + '-' + toTime(con.end / 60) + ':' + toTime(con.end % 60)" is-link v-for="con in plan.content" @click="confirmAddCourse(con)">
+        <span :style="{ color: con.el ? 'red' : 'green' }">{{ con.el ? '已选' : '可选' }}</span>
+      </mt-cell>
     </div>
 
-    <div id="toast" v-if="tip.toast">
-      <div class="weui-mask_transparent"></div>
-      <div class="weui-toast">
-        <i class="weui-icon-success-no-circle weui-icon_toast"></i>
-        <p class="weui-toast__content">已完成</p>
-      </div>
-    </div>
-    <div style="display: none">{{ selected }}</div>
+    <br />
+
+    <mt-actionsheet
+      :actions="actions"
+      v-model="sheetVisible">
+    </mt-actionsheet>
+
   </div>
-
 </template>
 
 <script>
@@ -90,7 +50,11 @@
     data () {
       return {
         chooseOn: 0,
-        selected: []
+        selected: '1',
+        sheetVisible: false,
+        actions: [{
+          name: '哈哈'
+        }]
       }
     },
     computed: {
@@ -104,54 +68,53 @@
       })
     },
     watch: {
-      coach () {
-        this.choose(1)
-      },
-      plan () {
-        this.$store.dispatch('getCourses')
+      selected () {
+        let date = new Date(Date.now() + 86400000 * parseInt(this.selected))
+        this.course.year = date.getYear()
+        this.course.month = date.getMonth()
+        this.course.date = date.getDate()
+        this.$store.dispatch('getPlan')
       },
       courses () {
         for (let course of this.courses) {
           for (let con of this.plan.content) {
             if (course.start === con.start && course.end === con.end) {
               con.el = true
-              this.selected.push(1)
+              // this.selected.push(1)
             }
           }
         }
       }
     },
     methods: {
-      choose (id) {
-        this.chooseOn = id
-        let date = new Date(Date.now() + 86400000 * id)
-        this.course.year = date.getYear()
-        this.course.month = date.getMonth()
-        this.course.date = date.getDate()
-        this.$store.dispatch('getPlan')
-      },
-      showConfirmActionSheet (course) {
-        if (!course.el) {
-          this.tip.sheet = true
-          this.tip.mask = true
-          this.course.start = course.start
-          this.course.end = course.end
+      isSelected (con) {
+        for (let course of this.courses) {
+          if (con.start === course.start && con.end === course.end) {
+            return true
+          }
         }
+        return false
       },
-      hideConfirmActionSheet () {
-        this.tip.sheet = false
-        this.tip.mask = false
+      toTime (val) {
+        val = parseInt(val)
+        val = '00' + val
+        return val.slice(val.length - 2)
+      },
+      confirmAddCourse (course) {
+        this.actions = [
+          { name: '123' }
+        ]
+        this.sheetVisible = true
       },
       addCourse (course) {
         this.$store.dispatch('addCourse')
-        this.hideConfirmActionSheet()
-        this.$store.dispatch('getCourses')
       }
     },
     created () {
       this.course.type = 2
       this.course.coach_id = this.$route.params.id
       this.$store.dispatch('getCoach')
+      this.$store.dispatch('getPlan')
     }
   }
 
@@ -159,6 +122,10 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
+  .schema {
+    margin-top: 0.2rem;
+  }
 
   .weui-cells {
     margin-top: 0;

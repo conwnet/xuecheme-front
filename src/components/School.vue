@@ -29,7 +29,7 @@
       <div class="line" />
 
 
-      <a class="weui-btn weui-btn_warn">立即报名</a>
+      <a class="weui-btn weui-btn_warn" @click="confirmEnrol">立即报名</a>
       <div class="line" />
 
       <div class="comment">
@@ -79,9 +79,11 @@
     methods: {
       choosePack (item) {
         this.$store.state.pack = item
-        console.log(this.pack === this.$store.state.pack)
-        // this.pack = item
-        console.log(this.pack, item)
+      },
+      confirmEnrol () {
+        if (this.pack.id) {
+          this.$router.push('/enroll/' + this.pack.id)
+        }
       }
     },
     created () {
@@ -97,6 +99,7 @@
   .container {
     overflow: auto;
     height: 100%;
+    color: #333;
   }
 
   .slider {
