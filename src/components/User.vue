@@ -1,85 +1,63 @@
 <template>
   <div class="container">
-    <img :src="$store.state.user.headimgurl" class="headimg">
-    <div class="weui-cells weui-cells_form">
+    <div class="header">
+      <img :src="$store.state.user.headimgurl" class="headimg">
 
-      <div class="weui-cell weui-cell_access" @click="showNameDialog">
-        <div class="weui-cell__hd"><label class="weui-label">姓名</label></div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" placeholder="请输入姓名" v-model="user.name" disabled />
+      <div class="glass"></div>
+      <div class="menu">
+        <div class="menu_item">
+          <p class="menu_item_title">学车进度</p>
+          <p class="menu_item_content">{{ user.process || '未绑定' }}</p>
         </div>
-        <div class="weui-cell__ft">
+        <div class="menu_item">
+          <p class="menu_item_title">推荐人数</p>
+          <p class="menu_item_content">{{ user.count || '暂无' }}</p>
+        </div>
+        <div class="menu_item">
+          <p class="menu_item_title">学车进度</p>
+          <p class="menu_item_content">￥{{ user.money || '0.00' }}</p>
         </div>
       </div>
 
-      <a class="weui-cell weui-cell_access" @click="showSexActionSheet">
-        <div class="weui-cell__hd">
-          <label class="weui-label">性别</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" :value="user.sex === 1 ? '男' : '女'" disabled />
-        </div>
-        <div class="weui-cell__ft">
-        </div>
-      </a>
-
-      <div class="weui-cell weui-cell_access" @click="showPhonePage">
-        <div class="weui-cell__hd">
-          <label class="weui-label">手机号</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" placeholder="绑定手机号" :value="user.phone" disabled />
-        </div>
-        <div class="weui-cell__ft">
-        </div>
-      </div>
-
-      <div class="weui-cell weui-cell_access" @click="showBind122Page">
-        <div class="weui-cell__hd">
-          <label class="weui-label">学车进度</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" placeholder="绑定 12123 帐号" :value="user.process" disabled />
-        </div>
-        <div class="weui-cell__ft">
-        </div>
-      </div>
     </div>
+
+
+    <mt-cell title="姓名" @click.native="changeName" is-link>
+      <svg class="item_icon" aria-hidden="true" slot="icon">
+        <use xlink:href="#icon-yunying"></use>
+      </svg>
+      <span :style="{ color: user.name ? 'green' : 'gray' }">{{ user.name || '修改姓名' }}</span>
+    </mt-cell>
+
+    <mt-cell title="性别" @click.native="changeSex" is-link>
+      <svg class="item_icon" aria-hidden="true" slot="icon">
+        <use xlink:href="#icon-yunying"></use>
+      </svg>
+      <span style="color: green;">{{ user.sex === 1 ? '先生' : '女士' }}</span>
+    </mt-cell>
+
+
+    <mt-cell title="手机号" to="/user/phone" is-link>
+      <svg class="item_icon" aria-hidden="true" slot="icon">
+        <use xlink:href="#icon-yunying"></use>
+      </svg>
+      <span :style="{ color: user.phone ? 'green' : 'gray' }">{{ user.phone || '绑定手机号'}}</span>
+    </mt-cell>
+
+
+    <mt-cell title="学车进度" to="/user/phone" is-link>
+      <svg class="item_icon" aria-hidden="true" slot="icon">
+        <use xlink:href="#icon-yunying"></use>
+      </svg>
+      <span :style="{ color: user.process ? 'green' : 'gray' }">{{ user.process || '绑定交管帐号' }}</span>
+    </mt-cell>
+
     <br />
 
-    <transition enter-active-class="animated fadeIn" leave-active-class="animated fadeOut">
-      <div class="weui-mask" v-if="mask" @click="hideActionSheet"></div>
-    </transition>
-
-
-    <div class="js_dialog" v-if="nameDialog">
-      <div class="weui-mask"></div>
-      <div class="weui-dialog">
-        <div class="weui-dialog__hd"><strong class="weui-dialog__title">修改姓名</strong></div>
-        <div class="weui-dialog__bd">
-          <input class="weui-input" style="text-align: center; border: 1px #888 solid; color: #000" placeholder="请输入姓名" v-model="user.name" />
-        </div>
-        <div class="weui-dialog__ft">
-          <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_default" @click="saveUserName">确认</a>
-          <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary" @click="hideNameDialog">取消</a>
-        </div>
-      </div>
-    </div>
-
-
-    <div class="weui-actionsheet" :class="{'weui-actionsheet_toggle': sexActionSheet}">
-      <div class="weui-actionsheet__title">
-        <p class="weui-actionsheet__title-text">请确认您的性别</p>
-      </div>
-      <div class="weui-actionsheet__menu">
-        <div class="weui-actionsheet__cell" @click="saveUserSex(1)">男</div>
-        <div class="weui-actionsheet__cell" @click="saveUserSex(2)">女</div>
-      </div>
-
-      <div class="weui-actionsheet__action">
-        <div class="weui-actionsheet__cell" @click="hideActionSheet">取消</div>
-      </div>
-    </div>
+    <mt-actionsheet
+      :actions="actions"
+      v-model="sheetVisible">
+    </mt-actionsheet>
 
   </div>
 </template>
@@ -87,13 +65,15 @@
 <script>
 
   import { mapState } from 'vuex'
+  import { MessageBox } from 'mint-ui'
 
   export default {
     name: 'User',
     data () {
       return {
         okToast: false,
-        sexActionSheet: false,
+        sheetVisible: false,
+        actions: [],
         mask: false,
         nameDialog: false
       }
@@ -104,24 +84,33 @@
       })
     },
     methods: {
-      showNameDialog () {
-        this.nameDialog = true
+      changeName () {
+        let name = this.user.name
+        MessageBox.prompt('请问我们该如何称呼您？', '提示', {inputValue: name}).then(({ value, action }) => {
+          if (action === 'confirm') {
+            this.user.name = name
+            this.$store.dispatch('saveUserName')
+          }
+        })
       },
-      saveUserName () {
-        this.$store.dispatch('saveUserName')
-        this.nameDialog = false
-      },
-      hideNameDialog () {
-        this.nameDialog = false
-      },
-      showSexActionSheet () {
-        this.sexActionSheet = true
-        this.mask = true
-      },
-      saveUserSex (sex) {
-        this.$store.state.user.sex = sex
-        this.$store.dispatch('saveUserSex')
-        this.hideActionSheet()
+      changeSex () {
+        this.actions = [
+          {
+            name: '先生',
+            method: () => {
+              this.user.sex = 1
+              this.$store.dispatch('saveUserSex')
+            }
+          },
+          {
+            name: '女士',
+            method: () => {
+              this.user.sex = 2
+              this.$store.dispatch('saveUserSex')
+            }
+          }
+        ]
+        this.sheetVisible = true
       },
       hideActionSheet () {
         this.sexActionSheet = false
@@ -145,13 +134,57 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 
-  .headimg {
-    width: 12rem;
-    height: 12rem;
-    display: block;
-    margin: 0rem auto;
-    border-radius: 2.5rem;
+
+  .header {
+    background: #26a2ff;
+    padding-top: 2rem;
+    height: 14.5rem;
   }
 
+  .headimg {
+    margin: auto;
+    width: 8rem;
+    height: 8rem;
+    display: block;
+    border-radius: 50%;
+  }
+
+  .item_icon {
+    width: 2rem;
+    height: 2rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  .glass {
+    margin-top: 2rem;
+    opacity: 0.4;
+    height: 4.5rem;
+    background: #000;
+  }
+
+  .menu {
+    height: 3.5rem;
+    padding: 0.5rem;
+    position: relative;
+    bottom: 4.5rem;
+    color: #fff;
+    display: flex;
+  }
+
+  .menu_item {
+    flex: 1;
+    line-height: 2rem;
+    text-align: center;
+  }
+
+  .menu_item_title {
+    font-size: 1rem;
+  }
+
+  .menu_item_content {
+    color: #fff;
+    font-size: 0.9rem;
+  }
 
 </style>

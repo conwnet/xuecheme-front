@@ -25,18 +25,22 @@
       <mt-tab-item id="3">大后天</mt-tab-item>
     </mt-navbar>
 
-    <div class="schema">
-      <mt-cell :title="toTime(con.start / 60) + ':' + toTime(con.start % 60) + '-' + toTime(con.end / 60) + ':' + toTime(con.end % 60)" is-link v-for="con in plan.content" @click="confirmAddCourse(con)">
+    <mt-loadmore :top-method="refreshPlan" ref="loadmore" class="schema">
+      <mt-cell :title="toTime(con.start) + '-' + toTime(con.end)" is-link v-for="con in plan.content" @click.native="confirmAddCourse(con)">
         <span :style="{ color: con.el ? 'red' : 'green' }">{{ con.el ? '已选' : '可选' }}</span>
       </mt-cell>
-    </div>
+    </mt-loadmore>
 
     <br />
 
-    <mt-actionsheet
-      :actions="actions"
-      v-model="sheetVisible">
-    </mt-actionsheet>
+    <mt-popup v-model="popupVisible" position="bottom"  style="width: 100%; background: #eee">
+      <mt-header title="信息确认"></mt-header>
+      <mt-cell title="教练姓名" :value="coach.name"></mt-cell>
+      <mt-cell title="开始时间" :value="toTime(course.start)"></mt-cell>
+      <mt-cell title="结束时间" :value="toTime(course.end)"></mt-cell>
+      <mt-button type="danger" size="large" @click="addCourse" style="margin: 0.5rem 0;">确认预约</mt-button>
+      <mt-button type="default" size="large" @click="hidePopop" style="margin: 0.5rem 0;">取消</mt-button>
+    </mt-popup>
 
   </div>
 </template>
@@ -51,7 +55,7 @@
       return {
         chooseOn: 0,
         selected: '1',
-        sheetVisible: false,
+        popupVisible: false,
         actions: [{
           name: '哈哈'
         }]
@@ -74,16 +78,6 @@
         this.course.month = date.getMonth()
         this.course.date = date.getDate()
         this.$store.dispatch('getPlan')
-      },
-      courses () {
-        for (let course of this.courses) {
-          for (let con of this.plan.content) {
-            if (course.start === con.start && course.end === con.end) {
-              con.el = true
-              // this.selected.push(1)
-            }
-          }
-        }
       }
     },
     methods: {
@@ -95,24 +89,38 @@
         }
         return false
       },
-      toTime (val) {
-        val = parseInt(val)
-        val = '00' + val
-        return val.slice(val.length - 2)
+      toTime (time) {
+        let hour = '00' + parseInt(time / 60)
+        hour = hour.slice(hour.length - 2)
+        let minute = '00' + parseInt(time % 60)
+        minute = minute.slice(minute.length - 2)
+        return hour + ':' + minute
       },
       confirmAddCourse (course) {
-        this.actions = [
-          { name: '123' }
-        ]
-        this.sheetVisible = true
+        this.course.start = course.start
+        this.course.end = course.end
+        this.popupVisible = true
       },
       addCourse (course) {
         this.$store.dispatch('addCourse')
+        this.popupVisible = false
+        this.$store.dispatch('getPlan')
+      },
+      hidePopop () {
+        this.popupVisible = false
+      },
+      refreshPlan () {
+        this.$store.dispatch('getPlan')
+        this.$refs.loadmore.onTopLoaded()
       }
     },
     created () {
+      let date = new Date(Date.now() + 86400000 * parseInt(this.selected))
       this.course.type = 2
       this.course.coach_id = this.$route.params.id
+      this.course.year = date.getYear()
+      this.course.month = date.getMonth()
+      this.course.date = date.getDate()
       this.$store.dispatch('getCoach')
       this.$store.dispatch('getPlan')
     }

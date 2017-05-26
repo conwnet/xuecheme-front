@@ -1,8 +1,11 @@
 <template>
   <div class="container">
-    <div class="slider">
-      <img :src="url">
-    </div>
+    <mt-swipe style="height: 15rem;">
+      <mt-swipe-item v-for="url in school.headimg_list">
+        <img class="bannerimg" :src="url">
+      </mt-swipe-item>
+    </mt-swipe>
+
     <div class="content">
       <div class="name"><h3>{{ school.name }}</h3></div>
       <div class="price">
@@ -59,9 +62,7 @@
     name: 'School',
     data () {
       return {
-        comments: [
-        ],
-        url: 'https://img.alicdn.com/bao/uploaded/i1/TB186F0RXXXXXX8XpXXXXXXXXXX_!!0-item_pic.jpg_640x640q50.jpg'
+        comments: []
       }
     },
     computed: {
@@ -95,6 +96,10 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
+  .bannerimg {
+    width: 100%;
+  }
 
   .container {
     overflow: auto;

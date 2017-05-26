@@ -2,7 +2,7 @@
   <div class="container">
     <router-link  v-for="school in schools" :key="'sch_' + school.id" :to="'/school/' + school.id">
       <div class="school">
-        <img :src="school.headimg_url" class="headimg" />
+        <img :src="school.headimgurl" class="headimg" />
         <div class="text">
           <h3 class="name">{{ school.name }}</h3>
           <p class="price">
@@ -57,6 +57,7 @@
   .school {
     display: flex;
     border-bottom: 1px #ccc solid;
+    background: #fff;
   }
 
   .headimg {

@@ -31,20 +31,23 @@ let ajax = {
   }
 }
 
-let payForEnroll = async ({ state, commit }) => {
-  let res = await ajax.post(config.api_url + '/jsapi_config', {
-    url: 'http://xcm.conw.net'
+let wxJsConfig = async ({ state, commit }) => {
+  let conf = await ajax.post(config.api_url + '/get_jsapi_config', {
+    url: 'http://xcm.aimoma.com/?'
   }, state)
-  state.tip = res
-  wx.scanQRCode({
-    needResult: 0, // 默认为0，扫描结果由微信处理，1则直接返回扫描结果，
-    scanType: ['qrCode', 'barCode'], // 可以指定扫二维码还是一维码，默认二者都有
-    success: function (res) {
-      var result = res.resultStr // 当needResult 为 1 时，扫码返回的结果
-      console.log(result)
-      state.pack.title = result
-    }
-  })
+  wx.config(conf)
+}
+
+let payForEnroll = async ({ state, commit }) => {
+  commit('showLoading')
+  let res = await ajax.post(config.api_url + '/get_pay_info', state.pack, state)
+  commit('handleError', res)
+  if (res.errcode) return 0
+  console.log(res)
+  res.success = res => {
+    // commit('handleError', {errmsg: '支付成功！'})
+  }
+  wx.chooseWXPay(res)
 }
 
 let getUserInfo = async ({ state, commit }) => {
@@ -112,42 +115,23 @@ let getCoach = ({ state }) => {
 
 let getPlan = async ({ state, commit }) => {
   commit('showLoading')
-  console.log('haha')
-  let res = await ajax.get(config.api_url + '/plan?coach_id=' + state.coach.coach_id + '&year=' + state.course.year + '&month=' + state.course.month + '&date=' + state.course.date, state)
+  let res = await ajax.post(config.api_url + '/get_plan', state.course, state)
   commit('handleError', res)
-  if (!res.errcode && res.length) {
-    res[0].content = JSON.parse(res[0].content)
-    let courses = await ajax.get(config.api_url + '/course?coach_id=' + state.coach.coach_id + '&year=' + state.course.year + '&month=' + state.course.month + '&date=' + state.course.date, state)
-    for (let con of res[0].content) {
-      for (let course of courses) {
-        if (course.start === con.start && course.end === con.end) {
-          con.el = true
-        }
-      }
-    }
-    state.plan = res[0]
-  }
+  state.plan = res
 }
 
-let addCourse = ({ state }) => {
-  axios.post(config.api_url + '/course', state.course, {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200) {
-      // showToast(state, res.data)
-    }
-  })
+let addCourse = async ({ state, commit }) => {
+  commit('showLoading')
+  let res = await ajax.post(config.api_url + '/course', state.course, state)
+  commit('handleError', res)
 }
 
-let getSchools = ({ state }) => {
-  axios.get(config.api_url + '/school', {
-    headers: { ssid: state.ssid }
-  }).then(res => {
-    if (res.status === 200) {
-      state.schools = res.data
-      console.log('school', res.data)
-    }
-  })
+let getSchools = async ({ state, commit }) => {
+  commit('showLoading')
+  let res = await ajax.get(config.api_url + '/school', state)
+  commit('handleError', res)
+  state.schools = res
+  console.log(res)
 }
 
 let getSchool = ({ state }) => {
@@ -183,5 +167,6 @@ export default {
   getSchools,
   getSchool,
   getPacks,
+  wxJsConfig,
   payForEnroll
 }

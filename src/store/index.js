@@ -7,7 +7,7 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    ssid: '81413b084219bfe6cb84bdc5880b25662f53a1b2eaca6341d2d402ffb3fadecd',
+    ssid: '',
     time_out: 0,
     user: {},
     coach: {},

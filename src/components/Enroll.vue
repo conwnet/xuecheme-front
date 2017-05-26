@@ -4,7 +4,7 @@
        银河驾校 {{ pack.title }}
      </div>
     {{ parseInt(pack.pay) / 100 }}
-    <a class="weui-btn weui-btn_primary" @click="payForEnroll">立即支付</a>
+    <mt-button type="primary" size="large" @click="payForEnroll">立即支付</mt-button>
   </div>
 
 </template>
@@ -27,11 +27,13 @@
     },
     methods: {
       payForEnroll () {
-        this.pack.title = '支付中...'
         this.$store.dispatch('payForEnroll')
       }
     },
-    created: {
+    created () {
+      this.pack.id = 1
+      this.pack.title = 'haha'
+      this.$store.dispatch('wxJsConfig')
     }
   }
 

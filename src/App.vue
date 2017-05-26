@@ -1,79 +1,68 @@
 <template>
   <div id="app" style="height: 100%; background-color: #eee;">
 
-    <div class="main_btn" @click="handleClick"></div>
+
+    <div class="main_btn animated" :class="{rubberBand: animatedShow}" @click="showMenu">+</div>
 
     <transition enter-active-class="animated bounceInUp" leave-active-class="animated bounceOutDown">
-      <div v-if="menuShow" class="menu">
-        <router-link :to="'/user'">
-          <div class="menu_item">
-            <svg class="menu_icon" aria-hidden="true">
-              <use xlink:href="#icon-kaoqin"></use>
-            </svg>
-            <span class="menu_name">个人信息</span>
-            <span class="menu_status online"></span>
-          </div>
-        </router-link>
 
-        <router-link :to="'/school'">
-          <div class="menu_item">
-            <svg class="menu_icon" aria-hidden="true">
-              <use xlink:href="#icon-qiye"></use>
-            </svg>
-            <span class="menu_name">报驾校</span>
-            <span class="menu_status online"></span>
-          </div>
-        </router-link>
+      <div class="menu" v-if="menuShow">
 
-        <router-link :to="'/coach'">
-          <div class="menu_item">
-            <svg class="menu_icon" aria-hidden="true">
-              <use xlink:href="#icon-guiji"></use>
-            </svg>
-            <span class="menu_name">约教练</span>
-            <span class="menu_status online"></span>
-          </div>
-        </router-link>
+        <mt-cell to="/user" is-link>
+          <span class="menu_item" slot="title">个人信息</span>
+          <svg class="menu_icon" aria-hidden="true" slot="icon">
+            <use xlink:href="#icon-kaoqin"></use>
+          </svg>
+        </mt-cell>
 
-        <router-link :to="'/record'">
-          <div class="menu_item">
-            <svg class="menu_icon" aria-hidden="true">
-              <use xlink:href="#icon-renwu"></use>
-            </svg>
-            <span class="menu_name">约教记录</span>
-            <span class="menu_status online"></span>
-          </div>
-        </router-link>
+        <mt-cell to="/school" is-link>
+          <span class="menu_item" slot="title">报驾校</span>
+          <svg class="menu_icon" aria-hidden="true" slot="icon">
+            <use xlink:href="#icon-qiye"></use>
+          </svg>
+        </mt-cell>
 
-        <router-link :to="'/recommend'">
-          <div class="menu_item">
-            <svg class="menu_icon" aria-hidden="true">
-              <use xlink:href="#icon-kehu"></use>
-            </svg>
-            <span class="menu_name">我的推荐</span>
-            <span class="menu_status online"></span>
-          </div>
-        </router-link>
+        <mt-cell to="/coach" is-link>
+          <span class="menu_item" slot="title">约教练</span>
+          <svg class="menu_icon" aria-hidden="true" slot="icon">
+            <use xlink:href="#icon-guiji"></use>
+          </svg>
+        </mt-cell>
 
-        <router-link :to="'/exercise/1'">
-          <div class="menu_item">
-            <svg class="menu_icon" aria-hidden="true">
-              <use xlink:href="#icon-yunying"></use>
-            </svg>
-            <span class="menu_name">科目一练习</span>
-            <span class="menu_status online"></span>
-          </div>
-        </router-link>
+        <mt-cell to="/record" is-link>
+          <span class="menu_item" slot="title">约教记录</span>
+          <svg class="menu_icon" aria-hidden="true" slot="icon">
+            <use xlink:href="#icon-renwu"></use>
+          </svg>
+        </mt-cell>
 
-        <router-link :to="'/exercise/4'">
-          <div class="menu_item">
-            <svg class="menu_icon" aria-hidden="true">
-              <use xlink:href="#icon-yunying"></use>
-            </svg>
-            <span class="menu_name">科目四练习</span>
-            <span class="menu_status online"></span>
-          </div>
-        </router-link>
+        <mt-cell to="/recommend" is-link>
+          <span class="menu_item" slot="title">我的推荐</span>
+          <svg class="menu_icon" aria-hidden="true" slot="icon">
+            <use xlink:href="#icon-kehu"></use>
+          </svg>
+        </mt-cell>
+
+        <mt-cell to="/exercise/1" is-link>
+          <span class="menu_item" slot="title">科目四练习</span>
+          <svg class="menu_icon" aria-hidden="true" slot="icon">
+            <use xlink:href="#icon-yunying"></use>
+          </svg>
+        </mt-cell>
+
+        <mt-cell to="/exercise/4" is-link>
+          <span class="menu_item" slot="title">我的推荐</span>
+          <svg class="menu_icon" aria-hidden="true" slot="icon">
+            <use xlink:href="#icon-yunying"></use>
+          </svg>
+        </mt-cell>
+
+        <mt-cell @click.native="() => { $router.back() }" is-link>
+          <span class="menu_item" slot="title">返回上一页</span>
+          <svg class="menu_icon" aria-hidden="true" slot="icon">
+            <use xlink:href="#icon-yunying"></use>
+          </svg>
+        </mt-cell>
 
       </div>
     </transition>
@@ -103,7 +92,8 @@
     name: 'app',
     data () {
       return {
-        menuShow: false
+        menuShow: false,
+        animatedShow: false
       }
     },
     methods: {
@@ -114,6 +104,11 @@
         } else {
           this.$router.push({path: '/menu'})
         }
+      },
+      showMenu () {
+        this.animatedShow = true
+        setTimeout(() => { this.animatedShow = false }, 800)
+        this.menuShow = !this.menuShow
       }
     },
     watch: {
@@ -128,7 +123,6 @@
       }
     },
     created () {
-      // this.$store.dispatch('getUserInfo')
       console.log(this.$route.query)
     }
   }
@@ -144,10 +138,9 @@
     opacity: 0
   }
 
-
   .main_btn {
     color: #fff;
-    background: #1aad19;
+    background: #26a2ff;
     position: fixed;
     right: 1.5rem;
     bottom: 1.5rem;
@@ -155,6 +148,9 @@
     height: 3.5rem;
     border-radius: 50%;
     z-index: 999;
+    line-height: 3.5rem;
+    text-align: center;
+    font-size: 2rem;
   }
 
   .menu {
@@ -166,22 +162,15 @@
   }
 
   .menu_item {
-    align-items: center;
-    line-height: 2.5rem;
-    background: #fff;
-    border-top: 1px #ccc solid;
-  }
-
-  .menu_name {
+    vertical-align: middle;
     margin-left: 0.5rem;
-    color: #000;
   }
 
   .menu_icon {
-    margin-left: 1rem;
-    position: relative;
-    top: 0.5rem;
-    width: 2rem; height: 2rem;
+    width: 2rem;
+    height: 2rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
   }
 
 </style>

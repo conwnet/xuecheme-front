@@ -1,9 +1,6 @@
 <template>
   <div class="container">
 
-    tip: {{ $store.state.tip }}
-    user: {{ user }}
-    <button @click="handleClick">Click Me</button>
 
   </div>
 </template>
@@ -20,10 +17,6 @@
       }
     },
     methods: {
-      handleClick () {
-        this.user = '123123'
-        this.$store.dispatch('payForEnroll')
-      }
     }
   }
 
